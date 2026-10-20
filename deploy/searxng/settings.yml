@@ -1,0 +1,51 @@
+# SearXNG settings for the internal Enki research stack.
+# Only overrides are listed here; everything else comes from the image defaults.
+# Docs: https://docs.searxng.org/admin/settings/index.html
+use_default_settings: true
+
+general:
+  instance_name: "enki-searxng"
+  enable_metrics: true
+
+server:
+  # Overridden by SEARXNG_SECRET (set in deploy/.env); this placeholder is never used in prod.
+  secret_key: "overridden-by-SEARXNG_SECRET"
+  # Internal-only service: every request comes from the gateway's single IP,
+  # so the bot limiter would block our own traffic.
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "all"
+  formats:
+    - html
+    - json
+
+outgoing:
+  request_timeout: 4.0
+  max_request_timeout: 8.0
+  pool_connections: 50
+  enable_http2: true
+
+# Engines that are disabled/inactive by default but useful for research.
+# Engines that repeatedly fail from this VPS (datacenter IP) get disabled here
+# after measurement — see bench/report.md.
+engines:
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: mojeek
+    inactive: false
+    disabled: false
+  - name: openalex
+    disabled: false
+  - name: crossref
+    disabled: false
+  - name: hackernews
+    disabled: false
+  - name: npm
+    disabled: false

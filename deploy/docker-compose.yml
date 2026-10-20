@@ -1,0 +1,54 @@
+# Enki research stack: SearXNG (free metasearch) + Research Gateway.
+# Nothing is published on the host; consumers reach the services through the
+# Docker network shared with the GPT Researcher stack (enki-research_default).
+#
+#   cd deploy && cp .env.example .env  # fill in secrets
+#   docker compose up -d --build
+name: enki-search
+
+services:
+  searxng:
+    image: docker.io/searxng/searxng:2026.10.19-81371861f
+    container_name: enki-searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-cache:/var/cache/searxng
+    environment:
+      - SEARXNG_BASE_URL=http://enki-searxng:8080/
+      - SEARXNG_SECRET=${SEARXNG_SECRET:?set SEARXNG_SECRET in deploy/.env}
+    networks: [enki-research]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: enki-research-gateway:local
+    container_name: enki-research-gateway
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      - ENKI_DB_PATH=/data/enki_research.db
+      - ENKI_SEARXNG_URL=http://enki-searxng:8080
+    volumes:
+      - gateway-data:/data
+    depends_on:
+      searxng:
+        condition: service_healthy
+    networks: [enki-research]
+    mem_limit: 512m
+
+volumes:
+  searxng-cache:
+  gateway-data:
+
+networks:
+  enki-research:
+    external: true
+    name: enki-research_default
