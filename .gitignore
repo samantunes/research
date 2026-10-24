@@ -10,3 +10,13 @@ dist/
 build/
 *.egg-info/
 bench/results/
+
+# GPT Researcher outputs and runtime state
+outputs/
+my-docs/
+data/
+.langgraph-data/
+.next/
+node_modules/
+package-lock.json
+*.log

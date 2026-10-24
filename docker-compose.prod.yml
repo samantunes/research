@@ -1,0 +1,47 @@
+name: enki-research
+services:
+  gptr-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: enki-gptr-backend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./outputs:/usr/src/app/outputs
+      - ./my-docs:/usr/src/app/my-docs
+      - ./data:/usr/src/app/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - default
+      - caddy-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  gptr-frontend:
+    build:
+      context: ./frontend/nextjs
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_GPTR_API_URL=https://research.enkiengine.com/backend
+    container_name: enki-gptr-frontend
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_GPTR_API_URL=https://research.enkiengine.com/backend
+      - INTERNAL_GPTR_API_URL=http://enki-gptr-backend:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - default
+      - caddy-net
+    depends_on:
+      - gptr-backend
+
+networks:
+  caddy-net:
+    external: true
+    name: ai-server_default
